@@ -189,7 +189,7 @@ survival_mod = ()
 window = tk.Tk()
 window.title("Encounter Calculator")
 
-bg = PhotoImage(file = r"C:\\Users\\phili\\OneDrive\\Desktop\\code\\helper\\src_game\\Entities\\pop\\Random_Ecounter_Checker\\astro.png")
+bg = PhotoImage(file = r"astro.png")
 bg_image = tk.Label(window, image = bg) 
 bg_image.place(relheight=1,relwidth=1)
 
