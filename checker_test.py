@@ -187,6 +187,15 @@ Plants = {
     "4.2.5.0": "Non_Humanoid.Plant.Medicinal",
     "4.2.6.0": "Non_Humanoid.Plant.Very_Rare"}
 
+survival_mods = {
+    "0-11": 0,
+    "12-14": 1,
+    "15-17": 2,
+    "18-20": 3,
+    "21-24": 4,
+    "25+": 5}
+
+
 humanoid_er = ()
 fauna_er = ()
 flora_er = ()
@@ -241,35 +250,12 @@ def biome_encounter_combiner():
     encounter = encounter_var.get()
     random_encounter = generate_random_encounter(biome, encounter)
 
-
 def update_encounter_text(text):
     encounter_text.insert(tk.END, text)
 
 def clear_encounter_text():
     encounter_text.delete('1.0', tk.END)
-
-def survival_mod_calc():
-    try:
-        survival_check = int(survival.get())
-        if survival_check <= 11:
-            survival_mod = 0
-        elif 12 <= survival_check <= 14:
-            survival_mod = 1
-        elif 15 <= survival_check <= 17:
-            survival_mod = 2
-        elif 18 <= survival_check <= 20:
-            survival_mod = 3
-        elif 21 <= survival_check <= 24:
-            survival_mod = 4
-        elif 25 <= survival_check < 40:
-            survival_mod = 5
-        elif survival_check == None:
-            survival_mod = 1
-        return survival_mod
-    except ValueError:
-        print("Invalid input, must be an integer")
-        return None
-
+ 
 encounter_text_label = Label(window, text="Results:")
 encounter_text_label.grid(row=0, column=0, padx=5, pady=5)
 encounter_text = Text(window, height=12, width=60)
@@ -281,9 +267,11 @@ clear_button.grid(row=0, column=2, columnspan=1, padx=10, pady=5)
 # SURVIVAL INPUT
 survival_label = tk.Label(text="Survival Check:")
 survival_label.grid(row=10, column=0, padx=5, pady=5)
-survival = tk.Entry(window, width=5) 
-survival.grid(row=10, column=1, padx=5, pady=5)
-survival_mod = survival_mod_calc()
+survival_var = StringVar(window)
+survival_var.set("0-11") 
+survival_dropdown = OptionMenu(window, survival_var, *survival_mods.keys())
+survival_dropdown.grid(row=10, column=1, padx=5, pady=5)
+
 
 # VARYING VARIABLES
 ## BIOME VARIABLES
@@ -403,14 +391,30 @@ def set_encounter_ratings():
     selected_precipitation = precipitation_var.get()
     selected_speed = speed_var.get()
     selected_attitude = attitude_var.get()
-    survival_mod = survival_mod_calc()
+    selected_survival = survival_var.get()
+
+    survival_mod = survival_mods[selected_survival]
    
-    humanoid_er = int(biomes[selected_biome]['humanoid']) + int(times_of_day[selected_time_of_day]['humanoid']) + int(traffic[selected_traffic]) + int(survival_mod * (int(speed[selected_speed]) + int(attitude[selected_attitude])))
-    fauna_er = int(biomes[selected_biome]['fauna']) + int(times_of_day[selected_time_of_day]['fauna']) + int(seasons[selected_season]['fauna']) + int(wind[selected_wind]) + int(survival_mod * (int(speed[selected_speed]) + int(attitude[selected_attitude])))
-    flora_er = int(biomes[selected_biome]['flora']) + int(times_of_day[selected_time_of_day]['flora']) + int(seasons[selected_season]['flora']) + int(temp[selected_temp]) + int(precipitation[selected_precipitation]) + int(survival_mod * (int(speed[selected_speed]) + int(attitude[selected_attitude])))
+    humanoid_er = int(biomes[selected_biome]['humanoid']) + int(times_of_day[selected_time_of_day]['humanoid']) + int(traffic[selected_traffic]) + int(survival_mod) + int(speed[selected_speed]) + int(attitude[selected_attitude])
+    fauna_er = int(biomes[selected_biome]['fauna']) + int(times_of_day[selected_time_of_day]['fauna']) + int(seasons[selected_season]['fauna']) + int(wind[selected_wind]) + int(survival_mod) + int(speed[selected_speed]) + int(attitude[selected_attitude])
+    flora_er = int(biomes[selected_biome]['flora']) + int(times_of_day[selected_time_of_day]['flora']) + int(seasons[selected_season]['flora']) + int(temp[selected_temp]) + int(precipitation[selected_precipitation]) + int(survival_mod) + (int(speed[selected_speed]) + int(attitude[selected_attitude]))
     
     update_encounter_text(f"\nHumanoid ER: {humanoid_er}\n Fauna ER: {fauna_er}\n Flora ER: {flora_er}\n")
     return humanoid_er, fauna_er, flora_er
+
+
+def survival_mod(input):
+
+    mods = {
+        "0-11": 0,
+        "12-14": 1,
+        "15-17": 2,
+        "18-20": 3,
+        "21-24": 4,
+        "25+": 5}
+        
+    return survival_mods[input]
+
 
 def check_encounter_type():
     type_roll = random.randint(1,100)
@@ -499,9 +503,9 @@ def roll20():
 def check_for_encounter():
     humanoid_er, fauna_er, flora_er = set_encounter_ratings()
     sub_type = check_encounter_type()
-    survival_mod = survival_mod_calc()
     roll = roll20()
-    survival_mod = survival_mod_calc()
+    selected_survival = survival_var.get()
+    survival_mod = survival_mods[selected_survival]
     check = (survival_mod + roll)
 
     #update_encounter_text(f"Humanoid ER:{humanoid_er}, Fauna ER:{fauna_er}, Flora ER:{flora_er}\n")
@@ -602,6 +606,10 @@ def check_for_encounter():
         pass
     update_encounter_text(f"\n")
 
+def combo_check():
+    check_for_encounter()
+    biome_encounter_combiner()
+
 set_encounter_ratings_button = Button(window, text="See Encounter Ratings", command=set_encounter_ratings)
 set_encounter_ratings_button.grid(row=1, column=2, columnspan=1, padx=2, pady=2)
 
@@ -613,5 +621,8 @@ check_for_encounter_button.grid(row=3, column=2, columnspan=1, padx=2, pady=2)
 
 check_for_encounter_button = Button(window, text="Encounter&Biome", command= biome_encounter_combiner)
 check_for_encounter_button.grid(row=9, column=2, columnspan=1, padx=2, pady=2)
+
+combo_check_button = Button(window, text="Combo", command= combo_check)
+combo_check_button.grid(row=8, column=2, columnspan=1, padx=2, pady=2)
 
 window.mainloop()
